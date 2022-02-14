@@ -113,10 +113,9 @@ Common_App_C_Flags += -fPIC
 Common_App_C_Flags += -Wno-attributes
 
 Test_App_C_Flags += $(Test_App_Include_Paths)
-Test_App_C_Flags += -DENCLAVE_HEADER_UNTRUSTED=$(TEST_ENCLAVE_HEADER_UNTRUSTED)
 
 Demo_App_C_Flags += $(Demo_App_Include_Paths)
-Demo_App_C_Flags += -DENCLAVE_HEADER_UNTRUSTED=$(DEMO_ENCLAVE_HEADER_UNTRUSTED)
+#Demo_App_C_Flags += -DENCLAVE_HEADER_UNTRUSTED=$(DEMO_ENCLAVE_HEADER_UNTRUSTED)
 
 # Three configuration modes - Debug, prerelease, release
 #   Debug - Macro DEBUG enabled.
@@ -204,11 +203,10 @@ Common_Enclave_C_Flags += -DKMYTH_SGX
 
 Test_Enclave_C_Flags += $(Common_Enclave_C_Flags)
 Test_Enclave_C_Flags += $(Test_Enclave_Include_Paths)
-Test_Enclave_C_Flags += -DENCLAVE_HEADER_TRUSTED=$(TEST_ENCLAVE_HEADER_TRUSTED)
 
 Demo_Enclave_C_Flags += $(Common_Enclave_C_Flags)
 Demo_Enclave_C_Flags += $(Demo_Enclave_Include_Paths)
-Demo_Enclave_C_Flags += -DENCLAVE_HEADER_TRUSTED=$(DEMO_ENCLAVE_HEADER_TRUSTED)
+#Demo_Enclave_C_Flags += -DENCLAVE_HEADER_TRUSTED=$(DEMO_ENCLAVE_HEADER_TRUSTED)
 
 Common_Enclave_Cpp_Flags += -std=c++03
 Common_Enclave_Cpp_Flags += -nostdinc++
@@ -346,6 +344,7 @@ demo-test-keys-certs: demo/data/client_priv_test.pem \
 	              demo/data/server_priv_test.pem \
                       demo/data/server_cert_test.pem
 
+demo: override ENCLAVE_HEADERS = -DENCLAVE_HEADER_TRUSTED=$(DEMO_ENCLAVE_HEADER_TRUSTED) -DENCLAVE_HEADER_UNTRUSTED=$(DEMO_ENCLAVE_HEADER_UNTRUSTED)
 demo: demo-all demo-test-keys-certs
 ifneq ($(Build_Mode), HW_RELEASE)
 	@$(CURDIR)/$(Server_Name) -r demo/data/server_priv_test.pem -u demo/data/client_cert_test.pem -p 7000 &
@@ -363,44 +362,44 @@ endif
 ######## Test Common Objects ########
 
 test/enclave/ec_key_cert_marshal.o: common/src/ec_key_cert_marshal.c
-	@$(CC) $(Test_App_C_Flags) -c $< -o $@
+	@$(CC) $(Test_App_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 test/enclave/ec_key_cert_unmarshal.o: common/src/ec_key_cert_unmarshal.c
-	@$(CC) $(Test_App_C_Flags) -c $< -o $@
+	@$(CC) $(Test_App_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 test/enclave/ecdh_util.o: common/src/ecdh_util.c
-	@$(CC) $(Test_App_C_Flags) -c $< -o $@
+	@$(CC) $(Test_App_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 ######## Demo Common Objects ########
 
 demo/enclave/ec_key_cert_marshal.o: common/src/ec_key_cert_marshal.c
-	@$(CC) $(Demo_App_C_Flags) -c $< -o $@
+	@$(CC) $(Demo_App_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 demo/enclave/ec_key_cert_unmarshal.o: common/src/ec_key_cert_unmarshal.c
-	@$(CC) $(Demo_App_C_Flags) -c $< -o $@
+	@$(CC) $(Demo_App_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 demo/enclave/ecdh_util.o: common/src/ecdh_util.c
-	@$(CC) $(Demo_App_C_Flags) -c $< -o $@
+	@$(CC) $(Demo_App_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 
 ######## Test App Objects ########
 
 test/enclave/log_ocall.o: untrusted/src/ocall/log_ocall.c
-	@$(CC) $(Test_App_C_Flags) -c $< -o $@
+	@$(CC) $(Test_App_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 test/enclave/memory_ocall.o: untrusted/src/ocall/memory_ocall.c
-	@$(CC) $(Test_App_C_Flags) -c $< -o $@
+	@$(CC) $(Test_App_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 test/enclave/ecdh_ocall.o: untrusted/src/ocall/ecdh_ocall.c
-	@$(CC) $(Test_App_C_Flags) -c $< -o $@
+	@$(CC) $(Test_App_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 test/enclave/$(Test_Enclave_Name)_u.c: $(SGX_EDGER8R) test/enclave/$(Test_Enclave_Name).edl
@@ -412,7 +411,7 @@ test/enclave/$(Test_Enclave_Name)_u.c: $(SGX_EDGER8R) test/enclave/$(Test_Enclav
 	@echo "GEN  =>  $@"
 
 test/enclave/$(Test_Enclave_Name)_u.o: test/enclave/$(Test_Enclave_Name)_u.c
-	@$(CC) $(Test_App_C_Flags) -c $< -o $@
+	@$(CC) $(Test_App_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 $(Test_App_Name): $(Test_App_Source_Files) test/enclave/$(Test_Enclave_Name)_u.o \
@@ -422,7 +421,7 @@ $(Test_App_Name): $(Test_App_Source_Files) test/enclave/$(Test_Enclave_Name)_u.o
                                  test/enclave/ecdh_ocall.o \
                                  test/enclave/memory_ocall.o \
                                  test/enclave/log_ocall.o
-	@$(CXX) $^ -o $@ $(Test_App_Cpp_Flags) $(Test_App_Link_Flags) \
+	@$(CXX) $^ -o $@ $(Test_App_Cpp_Flags) $(Test_App_Link_Flags) $(ENCLAVE_HEADERS) \
 	                                  -Lenclave -lcrypto -lcunit
 	@echo "LINK =>  $@"
 
@@ -431,15 +430,15 @@ $(Test_App_Name): $(Test_App_Source_Files) test/enclave/$(Test_Enclave_Name)_u.o
 ######## Demo App Objects ########
 
 demo/enclave/log_ocall.o: untrusted/src/ocall/log_ocall.c
-	@$(CC) $(Demo_App_C_Flags) -c $< -o $@
+	@$(CC) $(Demo_App_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 demo/enclave/memory_ocall.o: untrusted/src/ocall/memory_ocall.c
-	@$(CC) $(Demo_App_C_Flags) -c $< -o $@
+	@$(CC) $(Demo_App_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 demo/enclave/ecdh_ocall.o: untrusted/src/ocall/ecdh_ocall.c
-	@$(CC) $(Demo_App_C_Flags) -c $< -o $@
+	@$(CC) $(Demo_App_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 demo/enclave/$(Demo_Enclave_Name)_u.c: $(SGX_EDGER8R) demo/enclave/$(Demo_Enclave_Name).edl
@@ -451,13 +450,13 @@ demo/enclave/$(Demo_Enclave_Name)_u.c: $(SGX_EDGER8R) demo/enclave/$(Demo_Enclav
 	@echo "GEN  =>  $@"
 
 demo/enclave/$(Demo_Enclave_Name)_u.o: demo/enclave/$(Demo_Enclave_Name)_u.c
-	@$(CC) $(Demo_App_C_Flags) -c $< -o $@
+	@$(CC) $(Demo_App_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 demo/enclave/$(DEMO_ENCLAVE_HEADER_UNTRUSTED): demo/enclave/$(Demo_Enclave_Name)_u.c
 
 demo/app/%.o: demo/app/%.c demo/enclave/$(DEMO_ENCLAVE_HEADER_UNTRUSTED)
-	@$(CC) $(Demo_App_C_Flags) -c $< -o $@
+	@$(CC) $(Demo_App_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 $(Demo_App_Name): demo/app/kmyth_sgx_retrieve_key_demo.o \
@@ -468,7 +467,7 @@ $(Demo_App_Name): demo/app/kmyth_sgx_retrieve_key_demo.o \
              demo/enclave/ecdh_ocall.o \
              demo/enclave/memory_ocall.o \
              demo/enclave/log_ocall.o 
-	@$(CXX) $^ -o $@ $(Demo_App_Cpp_Flags) $(Demo_App_Link_Flags)
+	@$(CXX) $^ -o $@ $(Demo_App_Cpp_Flags) $(Demo_App_Link_Flags) $(ENCLAVE_HEADERS)
 	@echo "LINK =>  $@"
 
 ######## Test Server ########
@@ -481,14 +480,14 @@ $(Server_Name): demo/server/ecdh_server.o \
                 demo/server/ecdh_demo.o \
                 demo/enclave/ecdh_util.o \
                 demo/enclave/log_ocall.o
-	@$(CXX) $^ -o $@ $(Demo_App_Cpp_Flags) $(Demo_App_Link_Flags)
+	@$(CXX) $^ -o $@ $(Demo_App_Cpp_Flags) $(Demo_App_Link_Flags) $(ENCLAVE_HEADERS)
 	@echo "LINK =>  $@"
 
 $(Client_Name): demo/server/ecdh_client.o \
                 demo/server/ecdh_demo.o \
                 demo/enclave/ecdh_util.o \
                 demo/enclave/log_ocall.o
-	@$(CXX) $^ -o $@ $(Demo_App_Cpp_Flags) $(Demo_App_Link_Flags)
+	@$(CXX) $^ -o $@ $(Demo_App_Cpp_Flags) $(Demo_App_Link_Flags) $(ENCLAVE_HEADERS) 
 	@echo "LINK =>  $@"
 
 ######## Test Enclave Objects ########
@@ -502,46 +501,46 @@ test/enclave/$(Test_Enclave_Name)_t.c: $(SGX_EDGER8R) test/enclave/$(Test_Enclav
 	@echo "GEN  =>  $@"
 
 test/enclave/$(Test_Enclave_Name)_t.o: test/enclave/$(Test_Enclave_Name)_t.c
-	@$(CC) $(Test_Enclave_C_Flags) -c $< -o $@
+	@$(CC) $(Test_Enclave_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 test/enclave/kmyth_enclave_memory_util.o: \
 		trusted/src/util/kmyth_enclave_memory_util.c 
-	@$(CC) $(Test_Enclave_C_Flags) -c $< -o $@
+	@$(CC) $(Test_Enclave_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 test/enclave/sgx_retrieve_key_impl.o: \
 		trusted/src/wrapper/sgx_retrieve_key_impl.c 
-	@$(CC) $(Test_Enclave_C_Flags) -c $< -o $@
+	@$(CC) $(Test_Enclave_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 test/enclave/kmyth_sgx_test_trusted.o: test/enclave/kmyth_sgx_test_trusted.c
-	@$(CC) $(Test_Enclave_C_Flags) -c $< -o $@
+	@$(CC) $(Test_Enclave_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 test/enclave/kmyth_enclave_seal.o: trusted/src/ecall/kmyth_enclave_seal.cpp 
-	@$(CC) $(Test_Enclave_C_Flags) -c $< -o $@
+	@$(CC) $(Test_Enclave_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 test/enclave/kmyth_enclave_unseal.o: trusted/src/ecall/kmyth_enclave_unseal.cpp
-	@$(CC) $(Test_Enclave_C_Flags) -c $< -o $@
+	@$(CC) $(Test_Enclave_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 test/enclave/kmyth_enclave_retrieve_key.o: \
 		trusted/src/ecall/kmyth_enclave_retrieve_key.cpp
-	@$(CC) $(Test_Enclave_C_Flags) -c $< -o $@
+	@$(CC) $(Test_Enclave_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 test/enclave/aes_gcm.o: ../src/cipher/aes_gcm.c
-	@$(CC) $(Test_Enclave_C_Flags) -c $< -o $@
+	@$(CC) $(Test_Enclave_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 test/enclave/memory_util.o: ../utils/src/memory_util.c
-	@$(CC) $(Test_Enclave_C_Flags) -c $< -o $@
+	@$(CC) $(Test_Enclave_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 test/enclave/kmip_util.o: ../src/protocol/kmip_util.c
-	@$(CC) $(Test_Enclave_C_Flags) -c $< -o $@
+	@$(CC) $(Test_Enclave_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 test/enclave/$(Test_Enclave_Lib): test/enclave/$(Test_Enclave_Name)_t.o \
@@ -557,7 +556,7 @@ test/enclave/$(Test_Enclave_Lib): test/enclave/$(Test_Enclave_Name)_t.o \
                         test/enclave/aes_gcm.o \
                         test/enclave/memory_util.o \
                         test/enclave/kmip_util.o
-	@$(CXX) $^ -o $@ $(Test_Enclave_Link_Flags)
+	@$(CXX) $^ -o $@ $(Test_Enclave_Link_Flags) $(ENCLAVE_HEADERS)
 	@echo "LINK =>  $@"
 
 
@@ -572,6 +571,7 @@ test/enclave/$(Test_Signed_Enclave_Name): test/enclave/$(Test_Enclave_Lib) \
 
 .PHONY: test
 
+test: override ENCLAVE_HEADERS = -DENCLAVE_HEADER_TRUSTED=$(TEST_ENCLAVE_HEADER_TRUSTED) -DENCLAVE_HEADER_UNTRUSTED=$(TEST_ENCLAVE_HEADER_UNTRUSTED)
 test: test-all
 	test/bin/kmyth_enclave_tests 2> /dev/null
 
@@ -597,39 +597,39 @@ demo/enclave/$(Demo_Enclave_Name)_t.c: $(SGX_EDGER8R) demo/enclave/$(Demo_Enclav
 	@echo "GEN  =>  $@"
 
 demo/enclave/$(Demo_Enclave_Name)_t.o: demo/enclave/$(Demo_Enclave_Name)_t.c
-	@$(CC) $(Demo_Enclave_C_Flags) -c $< -o $@
+	@$(CC) $(Demo_Enclave_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 demo/enclave/kmyth_enclave_memory_util.o: trusted/src/util/kmyth_enclave_memory_util.c 
-	@$(CC) $(Demo_Enclave_C_Flags) -c $< -o $@
+	@$(CC) $(Demo_Enclave_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 demo/enclave/sgx_retrieve_key_impl.o: trusted/src/wrapper/sgx_retrieve_key_impl.c 
-	@$(CC) $(Demo_Enclave_C_Flags) -c $< -o $@
+	@$(CC) $(Demo_Enclave_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 demo/enclave/kmyth_enclave_seal.o: trusted/src/ecall/kmyth_enclave_seal.cpp 
-	@$(CC) $(Demo_Enclave_C_Flags) -c $< -o $@
+	@$(CC) $(Demo_Enclave_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 demo/enclave/kmyth_enclave_unseal.o: trusted/src/ecall/kmyth_enclave_unseal.cpp
-	@$(CC) $(Demo_Enclave_C_Flags) -c $< -o $@
+	@$(CC) $(Demo_Enclave_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 demo/enclave/kmyth_enclave_retrieve_key.o: trusted/src/ecall/kmyth_enclave_retrieve_key.cpp
-	@$(CC) $(Demo_Enclave_C_Flags) -c $< -o $@
+	@$(CC) $(Demo_Enclave_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 demo/enclave/aes_gcm.o: ../src/cipher/aes_gcm.c
-	@$(CC) $(Demo_Enclave_C_Flags) -c $< -o $@
+	@$(CC) $(Demo_Enclave_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 demo/enclave/memory_util.o: ../utils/src/memory_util.c
-	@$(CC) $(Demo_Enclave_C_Flags) -c $< -o $@
+	@$(CC) $(Demo_Enclave_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 demo/enclave/kmip_util.o: ../src/protocol/kmip_util.c
-	@$(CC) $(Demo_Enclave_C_Flags) -c $< -o $@
+	@$(CC) $(Demo_Enclave_C_Flags) $(ENCLAVE_HEADERS) -c $< -o $@
 	@echo "CC   <=  $<"
 
 demo/enclave/$(Demo_Enclave_Lib): demo/enclave/$(Demo_Enclave_Name)_t.o \
@@ -644,7 +644,7 @@ demo/enclave/$(Demo_Enclave_Lib): demo/enclave/$(Demo_Enclave_Name)_t.o \
                         demo/enclave/aes_gcm.o \
                         demo/enclave/memory_util.o \
 			demo/enclave/kmip_util.o
-	@$(CXX) $^ -o $@ $(Demo_Enclave_Link_Flags)
+	@$(CXX) $^ -o $@ $(Demo_Enclave_Link_Flags) $(ENCLAVE_HEADERS)
 	@echo "LINK =>  $@"
 
 demo/enclave/$(Demo_Signed_Enclave_Name): demo/enclave/$(Demo_Enclave_Lib) $(Enclave_Signing_Key)
