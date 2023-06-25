@@ -11,7 +11,16 @@
 #include <stdbool.h>
 
 #include <tss2/tss2_sys.h>
+#include "defines.h"
 
+/**
+ * pcr_t:
+ *
+ * Typedef for PCR values used to compute a policy digest from specified
+ * PCR values.
+ */
+typedef unsigned char pcr_value_t[KMYTH_DIGEST_SIZE];
+  
 /**
  * @brief Converts a PCR selection input string, from the user, into the
  *        TPM 2.0 struct used to specify which PCRs to use in a sealing
@@ -51,4 +60,20 @@ int init_pcr_selection(TSS2_SYS_CONTEXT * sapi_ctx,
  */
 int get_pcr_count(TSS2_SYS_CONTEXT * sapi_ctx, int *pcrCount);
 
+
+/**
+ * @brief Computes the appropriate policy digest from a list of 
+ *        PCR values.
+ *
+ * @param[in] pcr_values     An array of pcr_value_t structs containing the PCR values.
+ * 
+ * @param[in] num_values     The number of pcr_values to be processed.
+ *
+ * @param[out] policy_digest A pointer to memory to hold the computed digest.
+ *
+ * @param[out] digest_len    A pointer to hold the computed digest length.
+ *
+ * @return 0 if success, 1 if error
+ */
+int compute_policy_digest_from_pcr_values(pcr_value_t* pcr_values, size_t num_values, uint8_t** policy_digest, size_t* digest_len);
 #endif /* PRCS_H */

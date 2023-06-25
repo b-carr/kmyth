@@ -102,3 +102,51 @@ int get_pcr_count(TSS2_SYS_CONTEXT * sapi_ctx, int *pcrCount)
             *pcrCount);
   return 0;
 }
+
+
+//############################################################################
+// tpm2_compute_polcy_digest_from_pcr_values
+//############################################################################
+int compute_policy_digest_from_pcr_values(pcr_value_t* pcr_values, size_t num_values, uint8_t** policy_digest, size_t* digest_len)
+{
+  // have to use the full digest stuff here to make it work.
+  EVP_MD_CTX* policy_ctx = NULL;
+  policy_ctx = EVP_MD_CTX_new();
+  if(policy_ctx == NULL)
+  {
+    return 1;
+  }
+  if(EVP_DigestInit_ex(policy_ctx, KMYTH_OPENSSL_HASH, NULL) != 1)
+  {
+    EVP_MD_CTX_free(policy_ctx);
+    return 1;
+  }
+
+  for(size_t i = 0; i < num_values; i++)
+  {
+    if(EVP_DigestUpdate(policy_ctx, pcr_values[i], KMYTH_DIGEST_SIZE) != 1)
+    {
+      EVP_MD_CTX_free(policy_ctx);
+      return 1;
+    }
+  }
+  *policy_digest = malloc(KMYTH_DIGEST_SIZE);
+  if(*policy_digest == NULL)
+  {
+    EVP_MD_CTX_free(policy_ctx);
+    return 1;
+  }
+  
+  if((EVP_DigestFinal_ex(policy_ctx, *policy_digest, (unsigned int*)digest_len) != 1) || (*digest_len != KMYTH_DIGEST_SIZE))
+  {
+    free(*policy_digest);
+    *policy_digest = NULL;
+    *digest_len = 0;
+    EVP_MD_CTX_free(policy_ctx);
+    return 1;
+  }
+  
+  EVP_MD_CTX_free(policy_ctx);
+  return 0;
+}
+
