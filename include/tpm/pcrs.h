@@ -76,4 +76,15 @@ int get_pcr_count(TSS2_SYS_CONTEXT * sapi_ctx, int *pcrCount);
  * @return 0 if success, 1 if error
  */
 int compute_policy_digest_from_pcr_values(pcr_value_t* pcr_values, size_t num_values, uint8_t** policy_digest, size_t* digest_len);
+
+/**
+ * @brief Reads a file of expected PCR values and produces the appropriate policy digest.
+ *
+ * @param[in] digests_file  The name of the filel.
+ *
+ * @param[in,out] expected_policy  A pointer to be allocated to hold the digest.
+ *
+ * @return 0 if success, 1 if error
+ */
+int compute_policy_digest_from_digests_file(char* digests_file, uint8_t** expected_policy);
 #endif /* PRCS_H */

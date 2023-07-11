@@ -202,6 +202,7 @@ int main(int argc, char **argv)
   char *cipherString = NULL;
   bool forceOverwrite = false;
   char *expected_policy = NULL;
+  char* digests_file = NULL;
   uint8_t bool_trial_only = 0; // reseal forces this
   uint8_t bool_policy_or = 0;
 
@@ -210,7 +211,7 @@ int main(int argc, char **argv)
   int option_index;
 
   while ((options =
-          getopt_long(argc, argv, "a:e:i:o:c:p:w:fhlvgs", longopts,
+          getopt_long(argc, argv, "a:d:e:i:o:c:p:w:fhlvgs", longopts,
                       &option_index)) != -1)
   {
     switch (options)
@@ -220,6 +221,9 @@ int main(int argc, char **argv)
       break;
     case 'c':
       cipherString = optarg;
+      break;
+    case 'd':
+      digests_file = optarg;
       break;
     case 'i':
       inPath = optarg;
@@ -278,7 +282,7 @@ int main(int argc, char **argv)
 
 
   // Check that the -e 'expected policy' was specified
-  if (expected_policy == NULL)
+  if (expected_policy == NULL && digests_file == NULL)
   {
     kmyth_log(LOG_ERR, "no expected policy specified ... exiting");
     if (authString != NULL)
@@ -288,7 +292,18 @@ int main(int argc, char **argv)
     kmyth_clear(ownerAuthPasswd, oa_passwd_len);
     return 1;
   }
+  if (expected_policy != NULL && digests_file != NULL)
+  {
+    kmyth_log(LOG_ERR, "-e and -d cannot be combined ... exiting");
+    if (authString != NULL)
+    {
+      kmyth_clear(authString, auth_string_len);
+    }
+    kmyth_clear(ownerAuthPasswd, oa_passwd_len);
+    return 1;
+  }
 
+  
   // Check that the -p 'pcrsString' was specified
   if (pcrsString == NULL)
   {
@@ -300,6 +315,7 @@ int main(int argc, char **argv)
     kmyth_clear(ownerAuthPasswd, oa_passwd_len);
     return 1;
   }
+
 
   // If output file not specified, set output path to basename(inPath) with
   // a .ski extension in the directory that the application is being run from.
@@ -357,6 +373,20 @@ int main(int argc, char **argv)
   uint8_t *seal_output = NULL;
   size_t seal_output_len = 0;
 
+  // Compute the expected policy, if necessary.
+  if(digests_file != NULL)
+  {
+    if(compute_policy_digests_from_digest_file(digests_file, &expected_policy))
+    {
+      kmyth_log(LOG_ERR, "Failed to produce expected policy from policy file %s ... exiting", digests_file);
+      kmyth_clear_and_free(unseal_output, unseal_output_len);
+      kmyth_clear(authString, auth_string_len);
+      kmyth_clear(ownerAuthPasswd, oa_passwd_len);
+      free(pcrs);
+      return 1;
+    }
+  }
+  
 // Call top-level "kmyth-seal" function
 if (tpm2_kmyth_seal(unseal_output, unseal_output_len, &seal_output, &seal_output_len,
                       (uint8_t *) authString,
