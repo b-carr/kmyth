@@ -103,7 +103,7 @@ int get_pcr_count(TSS2_SYS_CONTEXT * sapi_ctx, int *pcrCount)
   return 0;
 }
 
-int compute_policy_digests_from_digest_file(char* digests_file, uint8_t** expected_policy){
+int compute_policy_digest_from_digests_file(char* digests_file, uint8_t** expected_policy){
   return 0;
 }
 
